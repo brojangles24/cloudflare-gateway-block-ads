@@ -1,13 +1,11 @@
 name: Block ads update
 
-on:
-  workflow_dispatch: 
+on: 
   schedule:
-    - cron: '0 * * * *'
-  push:
-    branches:
-      - '**'
-
+    - cron: '0 * * * *' 
+  push: 
+    branches: 
+      - '*'
 jobs:
   block_ads_update:
     runs-on: ubuntu-latest
