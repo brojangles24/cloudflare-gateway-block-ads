@@ -1,0 +1,16 @@
+name: One-time Delete All Cloudflare Lists
+
+on:
+  workflow_dispatch:  # manual trigger
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+      - name: Run delete script
+        run: bash list_delete.sh
+        env:
+          API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
