@@ -2,24 +2,29 @@ name: Block ads update
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '0 * * * *'  # Every hour
+  workflow_dispatch:      # Allow manual trigger
   push:
     branches:
       - '**'
 
+permissions:
+  contents: write
+
 jobs:
   block_ads_update:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install jq, curl and other utilities
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y jq curl coreutils
 
-      - name: Run the script
+      - name: Run the Cloudflare ad-block updater
         env:
           API_TOKEN: ${{ secrets.API_TOKEN }}
           ACCOUNT_ID: ${{ secrets.ACCOUNT_ID }}
