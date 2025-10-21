@@ -53,8 +53,6 @@ CF_API_TOKEN → your Cloudflare API token
 
 CF_ACCOUNT_ID → your Cloudflare account ID
 
-(optional) CF_ZONE_ID → your Cloudflare Zone ID if needed
-
 Enable GitHub Actions:
 
 Go to Settings → Actions → General
