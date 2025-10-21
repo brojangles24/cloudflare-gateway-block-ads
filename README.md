@@ -1,24 +1,64 @@
-# Cloudflare Gateway Block Ads
-A GitHub Actions script to automatically create and update Cloudflare Zero Trust Gateway ad blocking lists and policy.
+Cloudflare Gateway Block Ads (1Hosts Lite Edition)
 
-The script works by periodically downloading the [OISD](https://oisd.nl/) small blocklist, splitting it into smaller chunks, uploading it to Cloudflare as multiple Domains lists, and then creating a policy that blocks all traffic to the domains in the lists.
+A GitHub Actions workflow and Bash script to automatically create and update Cloudflare Zero Trust Gateway DNS ad-blocking lists and policy using the 1Hosts Lite
+ blocklist.
 
-It does not use the Cloudflare API unnecessarily as it only updates the Domains lists if the OSID blocklist has changed since the last run.
+The script downloads the latest domains.wildcards list from 1Hosts Lite, removes comments and blank lines, splits it into multiple smaller chunks (to fit Cloudflare’s 1,000-domain per-list limit), uploads them as Cloudflare Gateway DNS Lists, and creates a DNS policy that blocks all domains in those lists.
 
-## Setup
+It only updates Cloudflare when the 1Hosts list changes — preventing unnecessary API calls.
 
-### Cloudflare
-First, you should ensure you have a Cloudflare account with a Zero Trust subscription. The free plan is sufficient for this script. You can sign up at [https://dash.cloudflare.com/sign-up/teams](https://dash.cloudflare.com/sign-up/teams).
+🚀 How It Works
 
-You will then need to create a Cloudflare API token with the `Account.Zero Trust` permission. You can do this at [https://dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens).
+Downloads the 1Hosts Lite blocklist
+Uses https://raw.githubusercontent.com/badmojr/1Hosts/master/Lite/domains.wildcards.
 
-You will also need to find your Cloudflare account ID. You can find this by going to the "Account Home" page in the Cloudflare dashboard and copying the account ID from the URL. It should be a 32 character string of letters and numbers.
+Filters and chunks domains
+Removes comments (#) and blank lines, then splits into lists of up to 1,000 domains (Cloudflare’s limit).
+Supports up to 100 lists (100k domains total).
 
-Please take note of the API token and account ID for use in the next step.
+Syncs with Cloudflare Gateway
 
-### GitHub
-Next you should make a fork of this project on GitHub. You can do this by clicking the "Fork" button in the top right of the page.
+Updates existing lists via the Lists API
 
-Next you must input the Cloudflare API token into your GitHub fork as a secret. You can do this by going to the "Settings" tab of your fork, then under the "Secrets and variables" dropdown in the sidebar, click "Actions". Click the "New repository secret" button and add a secret with the name `API_TOKEN` and the value of your Cloudflare API key. Create another secret with the name `ACCOUNT_ID` and the value of your Cloudflare account ID. 
+Creates new ones if needed
 
-Finally, you should ensure the GitHub actions are enabled for your fork. You can do this by going to the "Settings" tab of your fork, then under the "Actions" dropdown in the sidebar, click "General". Ensure the all actions and reusable workflows are permitted, and that workflow has read and write permissions.
+Deletes extra ones if there are too many
+
+Updates or creates a single DNS block policy matching your prefix (e.g., Block ads)
+
+Skips updates when the list hasn’t changed since the previous run.
+
+⚙️ Setup
+1. Cloudflare Setup
+
+You’ll need:
+
+A Cloudflare Zero Trust account (Free plan works) → Sign up here
+
+A Cloudflare API Token with the Account.Zero Trust permission
+→ Create one at https://dash.cloudflare.com/profile/api-tokens
+
+Your Cloudflare Account ID
+→ Found on your Account Home page URL (a 32-character string)
+
+Optionally, if you’re using zone-level lists, also grab your Zone ID from the domain’s Overview tab.
+
+2. GitHub Setup
+
+Fork this repository (click the Fork button in the top right).
+
+In your fork, go to Settings → Secrets and variables → Actions and add:
+
+CF_API_TOKEN → your Cloudflare API token
+
+CF_ACCOUNT_ID → your Cloudflare account ID
+
+(optional) CF_ZONE_ID → your Cloudflare Zone ID if needed
+
+Enable GitHub Actions:
+
+Go to Settings → Actions → General
+
+Allow All actions and reusable workflows
+
+Grant Read and write permissions
