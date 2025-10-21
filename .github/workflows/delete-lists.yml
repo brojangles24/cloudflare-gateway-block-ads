@@ -1,16 +1,27 @@
-name: One-time Delete All Cloudflare Lists
+#!/bin/bash
 
-on:
-  workflow_dispatch:  # manual trigger
+# Cloudflare account credentials
+API_TOKEN="$API_TOKEN"
+ACCOUNT_ID="$ACCOUNT_ID"
+MAX_RETRIES=10
 
-jobs:
-  delete:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repo
-        uses: actions/checkout@v3
-      - name: Run delete script
-        run: bash list_delete.sh
-        env:
-          API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+echo "Deleting all existing Cloudflare Gateway DNS lists..."
+
+# Fetch all lists using the correct endpoint
+all_lists=$(curl -sSfL --retry "$MAX_RETRIES" --retry-all-errors -X GET \
+  "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/rules/lists" \
+  -H "Authorization: Bearer ${API_TOKEN}" \
+  -H "Content-Type: application/json") || { echo "Failed to get lists"; exit 1; }
+
+# Loop through each list ID and delete it
+for id in $(echo "$all_lists" | jq -r '.result[].id'); do
+    name=$(echo "$all_lists" | jq -r --arg ID "$id" '.result[] | select(.id == $ID) | .name')
+    echo "Deleting list: $name ($id)"
+    curl -sSfL --retry "$MAX_RETRIES" --retry-all-errors -X DELETE \
+      "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/rules/lists/${id}" \
+      -H "Authorization: Bearer ${API_TOKEN}" \
+      -H "Content-Type: application/json" > /dev/null || echo "Failed to delete $name"
+done
+
+echo "✅ All lists deleted successfully."
+
